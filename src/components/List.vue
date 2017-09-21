@@ -21,17 +21,17 @@
           <mu-td> 
             <mu-raised-button @click='showDetail(movie.title)' label='Detail' primary />
             <mu-raised-button @click='openEditMovieModal(movie)' label='Edit' primary />
-            <mu-raised-button @click='remove(movie.title)' label='Delete' secondary />
+            <mu-raised-button @click='removeMovie(movie)' label='Delete' secondary />
           </mu-td>
         </mu-tr>
       </mu-tbody>
     </mu-table>
 
     <mu-float-button icon='add' class='add-movie-button' backgroundColor @click='openAddMovieModal' />
-    <vodal :show='adMovieModal' animation='slideDown' :width='500' :height='480' :closeButton='false'>
+    <vodal :show='addMovieModal' animation='slideDown' :width='500' :height='480' :closeButton='false'>
 
       <mu-text-field v-model='title' fullWidth icon='movie' label='Movie Title' labelFloat /> <br/>
-      <mu-text-field v-model='poster' fullWidth icon='picture_in_pictures' label='Poster address' labelFload/><br/>
+      <mu-text-field v-model='poster' fullWidth icon='picture_in_pictures' label='Poster address' labelFloat/><br/>
       <mu-text-field v-model='introduction'
       multiLine :row='2' :rowMax='6'
       fullWidth icon="description" label='Description' labelFloat/><br/>
@@ -39,9 +39,9 @@
       <mu-raised-button @click='addMovie' label='Ok' icon='check' primary />
     </vodal>
 
-    <vodal :show='editMovieModal' animation='slideDown' :width='500' :height:'480' :closeButton='false'>
+    <vodal :show='editMovieModal' animation='slideDown' :width='500' :height='480' :closeButton='false'>
        <mu-text-field v-model='title' fullWidth icon='movie' label='Movie Title' labelFloat /> <br/>
-      <mu-text-field v-model='poster' fullWidth icon='picture_in_pictures' label='Poster address' labelFload/><br/>
+      <mu-text-field v-model='poster' fullWidth icon='picture_in_pictures' label='Poster address' labelFloat/><br/>
       <mu-text-field v-model='introduction'
       multiLine :row='2' :rowMax='6'
       fullWidth icon="description" label='Description' labelFloat/><br/>
@@ -58,14 +58,17 @@ export default {
   },
   data () {
     return {
-      activeTab: 'tab1',
-      movies: []
+      title: '',
+      poster: '',
+      rating: null,
+      introduction: '',
+      movie_id: '',
+      movies: [],
+      addMovieModal: false,
+      editMovieModal: false
     }
   },
   methods: {
-    handleTabChange (val) {
-      this.activeTab = val
-    },
     getMovies () {
       this.$http.get('/api/movie')
         .then(res => {
@@ -74,57 +77,111 @@ export default {
         })
         .catch(err => {
           this.toastr.error(`${err.message}`, 'ERROR!')
-          console.log(err)
+          console.log('cannot get movie: ' + err)
         })
+    },
+    openAddMovieModal (movie) {
+      this.addMovieModal = true
+    },
+    openEditMovieModal (movie) {
+      this.editMovieModal = true
+      this.title = movie.title
+      this.rating = movie.rating
+      this.introduction = movie.introduction
+      this.poster = movie.poster
+      this.movie_id = movie._id
+    },
+    closeModal () {
+      this.addMovieModal = false
+      this.editMovieModal = false
+      this.title = ''
+      this.rating = null
+      this.poster = ''
+      this.introduction = ''
+      this.movie_id = ''
+    },
+    addMovie () {
+      this.$http.post('/api/movie', {
+        title: this.title,
+        poster: this.poster,
+        introduction: this.introduction,
+        rating: this.rating
+      })
+      .then(res => {
+        this.toastr.success('Add Movie Succeeded!')
+        console.log(res.data)
+        this.addMovieModal = false
+        this.title = ''
+        this.rating = null
+        this.poster = ''
+        this.introduction = ''
+        this.movie_id = ''
+        this.getMovies()
+      })
+      .catch(e => {
+        this.toastr.warn('Failed to save movie!')
+        console.log(e)
+      })
+    },
+    cancelAddMovie () {
+      this.addMovieModal = false
+      this.title = ''
+      this.rating = 0
+      this.poster = ''
+      this.introduction = ''
+    },
+    editMovie () {
+      let id = this.movie_id
+      this.$http.put(`/api/movie/${id}`, {
+        title: this.title,
+        poster: this.poster,
+        introduction: this.introduction,
+        rating: this.rating
+      })
+      .then(res => {
+        this.toastr.success('Edit Movie Succeeded!')
+        this.closeModal()
+        this.getMovies()
+        this.title = ''
+        this.rating = null
+        this.poster = ''
+        this.introduction = ''
+        this.movie_id = ''
+      })
+      .catch(err => console.log(err))
+    },
+    removeMovie (movie) {
+      let id = movie._id
+      this.$http.delete(`/api/movie/${id}`)
+        .then(res => {
+          this.toastr.success('Delete Succeeded!')
+          console.log(res.data)
+          this.getMovies()
+        })
+    },
+    showDetail (title) {
+      this.$router.push(`/movie/${title}`)
     }
   }
 }
 </script>
-<style scoped>
-.layout{
-  background-color: rgb(236, 236, 236);
+<style lang='css'>
+.mu-th{
+  text-align: center !important;
 }
-
-.header{
-  background-color: #7e57c2;
+.mu-td{
+  text-align: center !important;
 }
-
-.logo{
-  font-size: 24px;
-  color: white;
-  display: inline-block;
-  padding: 10px 20px;
+.movie-poster{
+  width: 80px;
+  padding: 4px 0;
 }
-
-.nav{
-  display: inline-block;
-  width: calc(100% - 150px);
-  margin: 0 auto;
-}
-
-.tab{
-  margin: 0 auto;
-  width: 400px;
-  background-color: rgba(0, 0, 0, 0);
-}
-
-.content{
-  width: 90%;
-  margin: 0 auto;
-}
-
-.breadcrumb{
-  margin: 10px 0;
-}
-
-.body{
-  background-color: white;
-  border-radius: 5px;
-  min-height: 500px;
-}
-
-.footer{
-  padding: 20px 0;
-  text-align: center;
+.movie-introduction{
+  white-space: normal;
+  padding: 4px 4px;
+  letter-spacing: 1px;
+  font-size: 14px;
+  text-align: left;
+  text-indent: 2em; 
 }
 </style>
