@@ -1,48 +1,81 @@
 <template lang='html'>
-  <div class="layout">
-    <div class="header">
-      <div class="logo">
-        Muse-UI
-      </div>
-      <div class="nav">
-        <mu-tabs :value="activeTab" @change="handleTabChange" class="tab">
-          <mu-tab value="tab1" title="Nav One"/>
-          <mu-tab value="tab2" title="Nav TwO"/>
-          <mu-tab value="tab3" title="Nav Three"/>
-        </mu-tabs>
-      </div>
-    </div>
-    <div class="content">
-      <div class="breadcrumb">
-        <mu-breadcrumb>
-          <mu-breadcrumb-item href="/">Home</mu-breadcrumb-item>
-          <mu-breadcrumb-item href="/">VideoGame</mu-breadcrumb-item>
-          <mu-breadcrumb-item>Download</mu-breadcrumb-item>
-        </mu-breadcrumb>
-      </div>
-      <div class="body">
-        <mu-sub-header>阳光</mu-sub-header>
-        <mu-content-block>
-          散落在指尖的阳光，我试着轻轻抓住光影的踪迹，它却在眉宇间投下一片淡淡的阴影。调皮的阳光掀动了四月的心帘，温暖如约的歌声渐起。似乎在诉说着，我也可以在漆黑的角落里，找到阴影背后的阳光，找到阳光与阴影奏出和谐的旋律。我要用一颗敏感赤诚的心迎接每一缕滑过指尖的阳光！
-        </mu-content-block>
-      </div>
-    </div>
-    <div class="footer">
-      Muse-UI ©2017 Created by Muse-UI
-    </div>
+  <div class = 'list'>
+    <mu-table :fixedHeader='true' :showCheckbox='false'>
+      <mu-thead>
+        <mu-tr>
+          <mu-th>Movie Photo</mu-th>
+          <mu-th>Movie Title</mu-th>
+          <mu-th>Description</mu-th>
+          <mu-th>Rating</mu-th>
+          <mu-th>Operation</mu-th>
+        </mu-tr>
+      </mu-thead>
+      <mu-tbody>
+        <mu-tr v-for="movie of movies">
+          <mu-td><img class='movie-poster' :src="movie.poster"></mu-td>
+          <mu-td><h3>{{movie.title}}</h3></mu-td>
+          <mu-td>
+            <p class="movie-introduction">{{movie.introduction}}</p>
+          </mu-td>
+          <mu-td class='movie-rating'>{{movie.rating}}</mu-td>
+          <mu-td> 
+            <mu-raised-button @click='showDetail(movie.title)' label='Detail' primary />
+            <mu-raised-button @click='openEditMovieModal(movie)' label='Edit' primary />
+            <mu-raised-button @click='remove(movie.title)' label='Delete' secondary />
+          </mu-td>
+        </mu-tr>
+      </mu-tbody>
+    </mu-table>
 
+    <mu-float-button icon='add' class='add-movie-button' backgroundColor @click='openAddMovieModal' />
+    <vodal :show='adMovieModal' animation='slideDown' :width='500' :height='480' :closeButton='false'>
+
+      <mu-text-field v-model='title' fullWidth icon='movie' label='Movie Title' labelFloat /> <br/>
+      <mu-text-field v-model='poster' fullWidth icon='picture_in_pictures' label='Poster address' labelFload/><br/>
+      <mu-text-field v-model='introduction'
+      multiLine :row='2' :rowMax='6'
+      fullWidth icon="description" label='Description' labelFloat/><br/>
+      <mu-raised-button @click="closeModal" label='Cancel' icon='undo' />
+      <mu-raised-button @click='addMovie' label='Ok' icon='check' primary />
+    </vodal>
+
+    <vodal :show='editMovieModal' animation='slideDown' :width='500' :height:'480' :closeButton='false'>
+       <mu-text-field v-model='title' fullWidth icon='movie' label='Movie Title' labelFloat /> <br/>
+      <mu-text-field v-model='poster' fullWidth icon='picture_in_pictures' label='Poster address' labelFload/><br/>
+      <mu-text-field v-model='introduction'
+      multiLine :row='2' :rowMax='6'
+      fullWidth icon="description" label='Description' labelFloat/><br/>
+      <mu-raised-button @click="closeModal" label='Cancel' icon='undo' />
+      <mu-raised-button @click='editMovie' label='Ok' icon='check' primary />
+    </vodal>
   </div>
 </template>
 <script>
 export default {
+  created () {
+    this.getMovies()
+    document.title = this.$route.name
+  },
   data () {
     return {
-      activeTab: 'tab1'
+      activeTab: 'tab1',
+      movies: []
     }
   },
   methods: {
     handleTabChange (val) {
       this.activeTab = val
+    },
+    getMovies () {
+      this.$http.get('/api/movie')
+        .then(res => {
+          console.dir(res.data)
+          this.movies = res.data
+        })
+        .catch(err => {
+          this.toastr.error(`${err.message}`, 'ERROR!')
+          console.log(err)
+        })
     }
   }
 }
