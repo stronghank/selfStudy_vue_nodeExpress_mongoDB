@@ -19,7 +19,7 @@
           </mu-td>
           <mu-td class='movie-rating'>{{movie.rating}}</mu-td>
           <mu-td> 
-            <mu-raised-button @click='showDetail(movie.title)' label='Detail' primary />
+            <mu-raised-button @click='showDetail(movie._id)' label='Detail' primary />
             <mu-raised-button @click='openEditMovieModal(movie)' label='Edit' primary />
             <mu-raised-button @click='removeMovie(movie)' label='Delete' secondary />
           </mu-td>
@@ -159,8 +159,8 @@ export default {
           this.getMovies()
         })
     },
-    showDetail (title) {
-      this.$router.push(`/movie/${title}`)
+    showDetail (id) {
+      this.$router.push(`/movie/${id}`)
     }
   }
 }

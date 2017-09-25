@@ -12,7 +12,7 @@ export default new Router({
       name: 'List',
       component: List
     }, {
-      path: '/movie/:title',
+      path: '/movie/:id',
       name: 'Detail',
       component: Detail
     }, {
